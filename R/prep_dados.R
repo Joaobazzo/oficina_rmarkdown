@@ -90,20 +90,15 @@ class(idh)
 class(pib)
 class(pop)
 
-save(idh,pib ,pop ,file =  "inst/dados/cidades.RData")
-save(idh,pib ,pop ,file =  "data/cidades.RData")
 
 
 # geometria muni ----
 geom_muni <- geobr::read_municipality()
-save(geom_muni,file =  "data/cidades_geometria.RData")
-save(geom_muni,file =  "inst/dados/cidades_geometria.RData")
+
 
 
 #  geometria rgint ----
 geom_rgint <- geobr::read_intermediate_region()
-save(geom_rgint,file =  "data/rgint_geometria.RData")
-save(geom_rgint,file =  "inst/dados/rgint_geometria.RData")
 
 
 
@@ -120,23 +115,42 @@ df_geral <- readr::read_rds("../RHA/data/df_geral_muni.rds")
 pib_historico <- df_geral[pibh, on = c("code_muni")]
 
 pib_historico[,code_muni := as.integer(code_muni)]
+pib_historico[,ano := as.integer(ano)]
 
 rm(pibh)
 rm(df_geral)
+pib_historico <- setDF(pib_historico)
+
+
+# FILTRO REGIAO-----
+nordeste_state <- pib[pib$name_region == "Nordeste","abbrev_state"]
+nordeste_state <- unique(nordeste_state)
+
+
+pib_historico <- pib_historico[pib_historico$abbrev_state %in% nordeste_state,]
+idh <- idh[idh$abbrev_state %in% nordeste_state,]
+pib <- pib[pib$abbrev_state %in% nordeste_state,]
+pop <- pop[pop$abbrev_state %in% nordeste_state,]
+geom_rgint <- geom_rgint[geom_rgint$abbrev_state %in% nordeste_state,]
+geom_muni <- geom_muni[geom_muni$abbrev_state %in% nordeste_state,]
+
+break()
 # save----
-setDF(pib_historico)
+
 save(pib_historico,file =  "data/pib_historico.RData")
-save(pib_historico,file =  "inst/dados/pib_historico.RData")
+save(idh,pib ,pop ,file =  "data/cidades.RData")
+save(geom_rgint,file =  "data/rgint_geometria.RData")
+save(geom_muni,file =  "data/cidades_geometria.RData")
 
 # TESTE-----
 break()
 rm(list=ls())
-load("inst/dados/pib_historico.RData")
+load("data/pib_historico.RData")
 class(pib_historico)
-load("inst/dados/cidades_geometria.RData")
-load("inst/dados/cidades.RData")
+load("data/cidades_geometria.RData")
+load("data/cidades.RData")
 class(pib)
 class(pop)
 class(idh)
-load("inst/dados/rgint_geometria.RData")
+load("data/rgint_geometria.RData")
 rm(list=ls())
