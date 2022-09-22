@@ -1,0 +1,182 @@
+---
+title: "Relatorio cidades"
+author: "Joao Pedro Bazzo"
+date: "`r Sys.Date()`"
+#output: html_document
+#output: 
+#  officedown::rdocx_document: default
+params:
+  my_code: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE}
+# carrega biblioteca
+library(ggplot2)
+library(mapview)
+library(geobr)
+library(bookdown)
+library(knitr)
+library(rmarkdown)
+```
+
+```{r load,echo=FALSE}
+load(file = "../data/cidades.RData")
+load(file = "../data/pib_historico.RData")
+load(file = "../data/cidades_geometria.RData")
+```
+
+```{r nomes,echo=FALSE}
+my_code <- params$my_code
+
+my_idh_dt <- subset(idh,code_muni == my_code)
+my_pib_dt <- subset(pib,code_muni == my_code)
+my_pop_dt <- subset(pop,code_muni == my_code)
+my_pib_historico_dt <- subset(pib_historico,code_muni == my_code)
+
+# rgint 
+code_rgint <- idh[idh$code_muni == my_code,"code_intermediate"]
+name_rgint <- idh[idh$code_muni == my_code,"name_intermediate"]
+
+# cidades da rgint
+all_cities <- idh[idh$code_intermediate == code_rgint,"code_muni"]
+
+# nome da cidade
+my_city <- idh[idh$code_muni == my_code,"name_muni"]
+
+# populacao em 2010
+my_pop_urbana_2010 <- subset(my_pop_dt,ano == 2010 & situacao_do_domicilio == "Urbana")
+my_pop_rural_2010 <- subset(my_pop_dt,ano == 2010 & situacao_do_domicilio == "Rural")
+```
+
+# `r my_city` - Introdução 
+
+Esse relatório tem o objetivo de mostrar os dados socioeconômicos da cidade de `r my_city`, utilizando a estrutura de Rmarkdown.
+
+-   Informações gerais
+    -   **Nome** `r my_city`
+
+    -   **Código** `r as.character(my_code)`
+
+    -   **Estado** `r idh[idh$code_muni == my_code,"name_state"]`
+
+    -   **PIB Total** `r pib[pib$code_muni == my_code,"PIB_Total"]` reais
+
+    -   **PIB per capita** `r pib[pib$code_muni == my_code,"PIB_capita"]`
+
+    -   **IDH** `r idh[idh$code_muni == my_code,"idhm"]`
+
+    -   **População Urbana (2010)** `r my_pop_urbana_2010$valor`
+
+    -   **População Rural (2010)** `r my_pop_rural_2010$valor`
+
+# Veja `r my_city` no mapa!
+
+```{r,echo = FALSE}
+
+mapview::mapview(geom_muni[geom_muni$code_muni == my_code,])
+```
+
+# PIB
+
+```{r limites-pib,echo = FALSE}
+min_ano <- min(my_pib_historico_dt$ano)
+max_ano <- max(my_pib_historico_dt$ano)
+
+pib_min_ano <- my_pib_historico_dt[my_pib_historico_dt$ano == min_ano,"pib"]
+pib_max_ano <-my_pib_historico_dt[my_pib_historico_dt$ano == max_ano,"pib"]
+
+diff_pib <- (pib_max_ano - pib_min_ano) / pib_min_ano
+diff_pib <- 100 * diff_pib
+diff_pib <- round(diff_pib,2)
+```
+
+A seguir, ilustra-se a evolução do PIB de `r my_city`. A primeira observação data de `r min_ano`, com PIB total de `r pib_min_ano` reais. Já em `r max_ano`, o valor do PIB foi de `r pib_max_ano` reais. A diferença no período foi de `r diff_pib` %.
+
+```{r fig_evolucao_pib, echo= TRUE}
+ggplot(data = my_pib_historico_dt)+
+  geom_bar(aes(x = ano,y = pib),stat = "identity")+
+  labs(title = paste("Evolução do PIB de",my_city)) +
+  theme_bw()
+```
+
+```{r pib-espacial, echo=FALSE}
+# filtro da geometria
+all_cities_geom <- geom_muni[geom_muni$code_muni %in% all_cities,]
+
+# adicionar através da função merge
+all_cities_geom <- merge(x = all_cities_geom
+                        ,y = pib[,c("code_muni","PIB_capita")]
+                        ,by = "code_muni")
+```
+
+```{r mapa_pib_capita, echo=FALSE}
+ggplot(data = all_cities_geom)+
+  geom_sf(mapping = aes(fill = PIB_capita))+
+    # color do gradiente
+  scale_fill_gradient(low = "yellow", high = "red")
+```
+
+A seguir, mostra-se os cinco maiores PIB per capita da região intermediária na qual pertence o município de `r my_city` Tabela \@ref(tab:tab0001).
+
+```{r tab0001, echo = FALSE}
+# seleciona pibs dos municipios da rgint
+top5 <- pib[pib$code_intermediate == code_rgint,]
+# filtra colunas
+top5 <- top5[,c("code_muni","name_muni","PIB_capita")]
+# ordena dados do maior para o menor
+top5 <- top5[order(top5$PIB_capita,decreasing = TRUE),]
+# usa apenas as linhas de maior valor (1 ate 5)
+top5 <- top5[1:5,]
+# tabela
+knitr::kable(x = top5
+             , caption = paste("Cinco maiores PIB per capita da RGINT",name_rgint,".")
+             ,row.names = FALSE)
+```
+
+# Situação do domicílio
+
+```{r situacao_prep_dados,echo = FALSE}
+# verifica qual estado pertence a cidade
+name_state <- pib[pib$code_muni == my_code,"name_state"]
+abbrev_state <- pib[pib$code_muni == my_code,"abbrev_state"]
+
+# pega dados de populacao do estado
+pop_state_dt <- pop[pop$abbrev_state == abbrev_state,]
+# usa somente algumas colunas
+pop_state_dt <- pop_state_dt[,c("code_muni","abbrev_state","ano","situacao_do_domicilio","proporcao")]
+
+# seleciona apenas a geometria do estado
+geom_state <- geom_muni[geom_muni$abbrev_state == abbrev_state,]
+# filtra colunas
+geom_state <- geom_state[,c("code_muni","geom")]
+
+# mescla os dados de geometria com populacao
+# usando como link a coluna "code_muni"
+
+muni_merge <- merge(x = geom_state,y = pop_state_dt,by = "code_muni")
+```
+
+Finalmente, vamos olhar as taxas de urbanização de todos os municípios do estado de `r name_state` (`r abbrev_state`). A Figura \@ref(fig:situacaodomi) a evolução do fenômeno.
+
+```{r situacaodomi, echo = FALSE}
+#| fig.cap = "Proporção da população conforme situação do domicilio.",
+#| echo = FALSE
+ggplot(data = muni_merge)+
+  geom_sf(mapping = aes(fill = as.numeric(proporcao)))+
+  geom_sf(data = muni_merge[muni_merge$code_muni == my_code,]
+          ,color = "red")+
+  # faceta
+  facet_grid(rows = vars(ano),cols = vars(situacao_do_domicilio))+
+  # cores
+  scale_fill_continuous(type = "viridis")+
+  # legendas
+  labs(title = "Percentual da população por situação de domicílio (%)",
+       subtitle = "Mapa do estado",
+       fill = "Proporção (%)")+
+  # tema
+  theme_void()
+```
