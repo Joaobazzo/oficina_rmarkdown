@@ -1,42 +1,142 @@
-
-
+# load-----
+rm(list=ls())
+gc(reset = TRUE)
 library(readr)
 library(magrittr)
+library(data.table)
 # recife
 
+RData_files <- list.files(path = "."
+                          ,pattern = ".RData"
+                          ,recursive = TRUE
+                          ,full.names = TRUE)
+RData_files
+unlink(RData_files)
 # populacao----
-pop <- readr::read_rds("../RHA/data/complexidade/complexidade_muni_prep_data/POPULACAO.rds")
-pop
+munis_list <- readr::read_rds("../RHA/data/munis_list.rds")
+
+pop <- munis_list$pop_censo_br[,.SD,.SDcols = c('municipio_codigo'
+                                                ,'municipio'
+                                                ,'code_intermediate'
+                                                ,'name_intermediate'
+                                                ,'code_imediate'
+                                                ,'name_imediate'
+                                                ,'ano'
+                                                ,'situacao_do_domicilio'
+                                                ,'valor')]
+
+pop[is.na(valor), valor := 0]
+pop[situacao_do_domicilio != "Total"
+    ,proporcao := round(100 * valor / sum(valor),2)
+    ,by = .(municipio_codigo,ano)]
+pop[situacao_do_domicilio == "Total",proporcao := 100]
+
+
+setnames(pop,"municipio_codigo","code_muni")
+
+munis_list$municipality$code_muni <- as.character(munis_list$municipality$code_muni)
+pop <- pop[munis_list$municipality[,.SD,.SDcols = c("code_muni","code_state", "abbrev_state")] 
+           ,on = "code_muni"]
+
+popCols <- c("situacao_do_domicilio",   "valor", "proporcao")
+muniCols <- names(pop)[!(names(pop) %in% popCols)]
+
+muniCols
+
+pop <- pop[,.SD,.SDcols = c(muniCols,popCols)]
+pop <- pop[situacao_do_domicilio != "Total"]
+pop[,code_muni := as.integer(code_muni)]
+
+rm(muniCols)
+rm(popCols)
+rm(munis_list)
 
 # pib----
 pib <- readr::read_rds("../RHA/data/complexidade/complexidade_muni_prep_data/pib.rds")
 pib <- pib[,.SD,.SDcols = c('code_muni', 'name_muni', 'code_state'
-           , 'abbrev_state', 'name_state', 'name_region', 'code_rgi'
-           , 'name_rgi', 'code_intermediate', 'name_intermediate'
-           , 'mun_sudene', 'mun_pisf', 'mun_bsf', 'mun_bpar'
-           , 'regiao_total', 'semi_arido', 'VAB_Adm', 'VAB_Agro'
-           , 'VAB_Serv', 'VAB_Ind', 'PIB_Total', 'PIB_capita')]
+                            , 'abbrev_state', 'name_state', 'name_region', 'code_rgi'
+                            , 'name_rgi', 'code_intermediate', 'name_intermediate'
+                            , 'mun_sudene', 'mun_pisf', 'mun_bsf', 'mun_bpar'
+                            , 'regiao_total', 'semi_arido', 'VAB_Adm', 'VAB_Agro'
+                            , 'VAB_Serv', 'VAB_Ind', 'PIB_Total', 'PIB_capita')]
 
+pib[,code_muni := as.integer(code_muni)]
 pib[1]
+
 # IDH ----
 idh <- readr::read_rds("../RHA/data/complexidade/complexidade_muni_prep_data/DESV_HUM.rds")
 
-idh[,classe_idhm := NULL]
-idh[,classe_ivs := NULL]
+idh[,":="(
+  classe_idhm = NULL
+  ,renda_per_capita = NULL
+  ,pndr_renda = NULL            
+  ,pndr_dinamismo = NULL
+  ,ivs = NULL
+  ,ivs_infraestrutura_urbana = NULL
+  ,ivs_capital_humano  = NULL
+  ,ivs_renda_e_trabalho = NULL
+  ,classe_ivs = NULL
+)]
+
+
+idh[,code_muni := as.integer(code_muni)]
+
+idh[1]
+
+idh <- setDF(idh)
+pib <- setDF(pib)
+pop <- setDF(pop)
+class(idh)
+class(pib)
+class(pop)
+
+save(idh,pib ,pop ,file =  "inst/dados/cidades.RData")
+save(idh,pib ,pop ,file =  "data/cidades.RData")
 
 
 # geometria muni ----
-geometria <- geobr::read_municipality()
-save(geometria,file =  "data/cidades_geometria.RData")
+geom_muni <- geobr::read_municipality()
+save(geom_muni,file =  "data/cidades_geometria.RData")
+save(geom_muni,file =  "inst/dados/cidades_geometria.RData")
 
 
 #  geometria rgint ----
-geometria <- geobr::read_intermediate_region()
-save(geometria,file =  "data/rgint_geometria.RData")
-
-
-save(idh, pib, pop,file =  "data/cidades.RData")
+geom_rgint <- geobr::read_intermediate_region()
+save(geom_rgint,file =  "data/rgint_geometria.RData")
+save(geom_rgint,file =  "inst/dados/rgint_geometria.RData")
 
 
 
-load("data/cidades.RData")
+# pib historico----
+pibh <- readr::read_rds("../RHA/data/pib_total.rds")
+pibh <- pibh[variavel == "Produto Interno Bruto a preços correntes",]
+pibh <- pibh[,.SD,.SDcols = c("municipio_codigo","ano","valor")]
+
+setnames(pibh,"municipio_codigo","code_muni")
+setnames(pibh,"valor","pib")
+
+df_geral <- readr::read_rds("../RHA/data/df_geral_muni.rds")
+
+pib_historico <- df_geral[pibh, on = c("code_muni")]
+
+pib_historico[,code_muni := as.integer(code_muni)]
+
+rm(pibh)
+rm(df_geral)
+# save----
+setDF(pib_historico)
+save(pib_historico,file =  "data/pib_historico.RData")
+save(pib_historico,file =  "inst/dados/pib_historico.RData")
+
+# TESTE-----
+break()
+rm(list=ls())
+load("inst/dados/pib_historico.RData")
+class(pib_historico)
+load("inst/dados/cidades_geometria.RData")
+load("inst/dados/cidades.RData")
+class(pib)
+class(pop)
+class(idh)
+load("inst/dados/rgint_geometria.RData")
+rm(list=ls())
