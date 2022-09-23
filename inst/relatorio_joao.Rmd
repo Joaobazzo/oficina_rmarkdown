@@ -2,6 +2,7 @@
 title: "Relatorio cidades"
 author: "Joao Pedro Bazzo"
 date: "`r Sys.Date()`"
+bibliography: referencias.bib
 #output: html_document
 #output: 
 #  officedown::rdocx_document: default
@@ -30,7 +31,8 @@ load(file = "../data/cidades_geometria.RData")
 ```
 
 ```{r nomes,echo=FALSE}
-my_code <- params$my_code
+my_code <- 2300150
+#my_code <- params$my_code
 
 my_idh_dt <- subset(idh,code_muni == my_code)
 my_pib_dt <- subset(pib,code_muni == my_code)
@@ -54,7 +56,7 @@ my_pop_rural_2010 <- subset(my_pop_dt,ano == 2010 & situacao_do_domicilio == "Ru
 
 # `r my_city` - Introdução 
 
-Esse relatório tem o objetivo de mostrar os dados socioeconômicos da cidade de `r my_city`, utilizando a estrutura de Rmarkdown.
+Esse relatório tem o objetivo de mostrar os dados socioeconômicos da cidade de `r my_city`, utilizando a estrutura de Rmarkdown [@rmarkdown2018].
 
 -   Informações gerais
     -   **Nome** `r my_city`
@@ -160,7 +162,7 @@ geom_state <- geom_state[,c("code_muni","geom")]
 muni_merge <- merge(x = geom_state,y = pop_state_dt,by = "code_muni")
 ```
 
-Finalmente, vamos olhar as taxas de urbanização de todos os municípios do estado de `r name_state` (`r abbrev_state`). A Figura \@ref(fig:situacaodomi) a evolução do fenômeno.
+Finalmente, vamos olhar as taxas de urbanização de todos os municípios do estado de `r name_state` (`r abbrev_state`) [@ibge2010]. A Figura \@ref(fig:situacaodomi) a evolução do fenômeno.
 
 ```{r situacaodomi, echo = FALSE}
 #| fig.cap = "Proporção da população conforme situação do domicilio.",
@@ -180,3 +182,5 @@ ggplot(data = muni_merge)+
   # tema
   theme_void()
 ```
+
+# Referências
