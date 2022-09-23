@@ -1,35 +1,172 @@
 ---
-title: "Workshop Rmarkdown"
-author: "João Pedro Bazzo Vieira"
-date: "2022-09-20"
-output: beamer_presentation
+title: "Workshop R Markdown"
+author: 
+  - name: "João Pedro Bazzo | RHA | joao.bazzo@gmail.com"
+date: "`r Sys.Date()`"
+output: ioslides_presentation
+bibliography: referencias.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library(mapview)
 ```
 
 ## R Markdown
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+R Markdown é uma sintaxe que permite a criação de documentos em formato HTML, PDF, e MS Word. R Markdown é útil por algumas razões:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+-   Rápido e fácil de escrever
+-   Incorporação de códigos dentro do arquivo, que facilita criar relatórios reproduzíveis
+-   Você pode exportar os arquivos em diferentes formatos
+-   Criação de relatórios e apresentações
 
-## Slide with Bullets
+## Exemplos
 
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-## Slide with R Output
-
-```{r cars, echo = TRUE}
-summary(cars)
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig2.png")
 ```
 
-## Slide with Plot
+## Exemplos
 
-```{r pressure}
-plot(pressure)
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig3.png")
+```
+
+## Exemplos
+
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig4.png")
+```
+
+## Exemplos
+
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig5.png")
+```
+
+## Exemplos
+
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig6.png")
+```
+
+## Exemplos
+
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig7.png")
+```
+
+## Exemplos
+
+```{r , echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig8.png")
+```
+
+
+## Renderização
+
+-   **knit**: pacote utilizado pelo `rmarkdown` para rodar os códigos, gerar os resultados, e juntar com a parte escrita.
+```{r cars, echo = FALSE,out.width="75%"}
+knitr::include_graphics(path = "../figs/fig1.png")
+```
+
+-  **pandoc**: conversão do relatório para um novo formato (MS Word, HTML, PDF).
+
+## Estrutura do R Markdown
+
+###  YAML metadados
+
+```{r,eval=FALSE, echo = TRUE}
+---
+title: My R Markdown Report
+author: João
+output:
+  html_document:
+    toc: true
+---
+```
+
+Outras configurações:
+
+`?rmarkdown::html_document` \
+`?bookdown::pdf_document2`
+
+## Estrutura do R Markdown
+
+###  Seções
+
+    ```{r,eval=FALSE,echo=TRUE}
+    # Primeiro nível
+
+    ## Segundo nível
+
+    ### Terceiro nível
+    ```
+
+## Estrutura do R Markdown
+
+###  Códigos ("chunks")
+
+```{r,eval=FALSE,echo = TRUE}
+# ```{r,echo = FALSE,out.width="45%"}
+# par(mar = c(4, 4, .2, .1))
+# plot(cars, pch = 19)
+# plot(pressure, pch = 17)
+# ```
+```
+```{r,echo = FALSE,out.width="45%"}
+ par(mar = c(4, 4, .2, .1))
+ plot(cars, pch = 19)
+ plot(pressure, pch = 17)
+```
+
+## Estrutura do R Markdown
+
+###  Formatação do texto
+
+   *    *Itálico*: (`*Itálico*`)
+   *    **Negrito**: (`**Negrito**`)
+   *    ***Ambos***: (`***Ambos***`)
+   
+### Criação de links
+
+   *    [Manual Bookdown](https://bookdown.org/yihui/rmarkdown-cookbook/installation.html)
+   *    [Manual RStudio](https://rmarkdown.rstudio.com/lesson-1.html)
+   *    [Repositório Github](https://github.com/Joaobazzo/oficina_rmarkdown)
+
+###  Fórmulas matemáticas
+
+-   $E = mc^2$, gerado pela expressão `$E = mc^2$`
+
+
+##  Tabelas
+
+```{r, echo = TRUE}
+knitr::kable(x = mtcars[1:4,1:5], caption = "Tipos de automóvel")
+```
+
+## Visualizações dinâmicas
+
+```{r,echo = TRUE,eval=TRUE}
+load(file = "../data/idh_maranhao.RData")
+mapview::mapview(geom_ma["idhm"])
+```
+
+
+
+## Referencias
+
+Essa apresentação foi produzido considerando o manual de @R-rmarkdown
+
+## Parte prática!
+
+Acesse o repositório da [oficina](https://github.com/Joaobazzo/oficina_rmarkdown):
+<https://github.com/Joaobazzo/oficina_rmarkdown>
+
+Em seguida, clique em `Code` e depois em `Download ZIP`.
+
+```{r, echo = FALSE,out.width="100%"}
+knitr::include_graphics(path = "../figs/fig9.png")
 ```
 
