@@ -134,7 +134,17 @@ pop <- pop[pop$abbrev_state %in% nordeste_state,]
 geom_rgint <- geom_rgint[geom_rgint$abbrev_state %in% nordeste_state,]
 geom_muni <- geom_muni[geom_muni$abbrev_state %in% nordeste_state,]
 
-break()
+# mapa IDH - Maranhao----
+
+geom_det <- geobr::read_municipality(simplified = FALSE)
+geom_ma <- geom_det[geom_det$abbrev_state == "MA",]
+
+geom_ma <- merge(x = geom_ma
+                         ,y = idh[,c("code_muni","idhm")]
+                         ,by = "code_muni")
+geom_ma$idhm <- as.numeric(geom_ma$idhm)
+
+save(geom_ma,file =  "data/idh_maranhao.RData")
 # save----
 
 save(pib_historico,file =  "data/pib_historico.RData")
